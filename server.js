@@ -17,8 +17,14 @@ var bs = BinaryServer({server: server});
 bs.on('connection', function(client){
     client.on('stream', function(stream, meta){
 
+        console.log('meta', meta);
+
         var clients = _.values(bs.clients);
         var otherClients = clients.filter(function(cl){return client !== cl});
+
+        console.log('clients :', clients);
+        console.log('otherClients :', otherClients);
+        
 
         _.each(otherClients, function(other){
             var responseStream = other.createStream(meta);
