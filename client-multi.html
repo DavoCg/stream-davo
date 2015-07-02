@@ -1,0 +1,101 @@
+<html>
+<body>
+
+<canvas id="sender"></canvas>
+<canvas id="receiver"></canvas>
+<video id="video" style="display:none;"></video>
+<div id="message"></div>
+
+<script src="http://cdn.binaryjs.com/0/binary.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.7.1/modernizr.min.js"></script>
+<script>
+    (function(document){
+        document.addEventListener('DOMContentLoaded', function(){
+            var settings = {
+                grabRate: 20,
+                canvasWidth: 200,
+                canvasHeight: 160,
+                socketSrv: 'ws://localhost:9000'
+            };
+
+            var client = new BinaryClient(settings.socketSrv);
+            var stream;
+
+            var senderEl = document.getElementById('sender');
+            var receiverEl = document.getElementById('receiver');
+            var videoEl = document.getElementById('video');
+
+            var senderContext = senderEl.getContext('2d');
+            var receiverContext = receiverEl.getContext('2d');
+
+            var receiverDataLength = settings.canvasWidth * settings.canvasHeight * 4;
+            var receiverPos = 0;
+            var transferRate = Math.round(((1000 / settings.grabRate) * receiverDataLength / 1024), 2);
+
+            var imageFrame = receiverContext.getImageData(0, 0, settings.canvasWidth, settings.canvasHeight);
+            var userMedia = Modernizr.prefixed('getUserMedia', navigator);
+
+            senderEl.width = settings.canvasWidth;
+            senderEl.height = settings.canvasHeight;
+            receiverEl.width = settings.canvasWidth;
+            receiverEl.height = settings.canvasHeight;
+            videoEl.width = settings.canvasWidth;
+            videoEl.height = settings.canvasHeight;
+
+            document.getElementById('message').innerHTML = 'Sending: ' + transferRate + ' KB / Sec<br />';
+            document.getElementById('message').innerHTML += 'Receiving: ' + transferRate + ' KB / Sec';
+
+            client.on('open', function(s){
+                stream = client.createStream(s, 'toserver');
+            });
+
+            client.on('stream', function(stream, meta){
+                if(meta.name === 'from-server'){
+                    stream.on('data', putImage);
+                }
+            });
+
+            function putImage(data){
+                var dataArr = new Uint8Array(data);
+                for (var i = 0, len = dataArr.length; i < len; i++) {
+                    imageFrame.data[receiverPos] = dataArr[i];
+                    receiverPos++;
+                    if(receiverPos % receiverDataLength === 0){
+                        receiverPos = 0;
+                        receiverContext.putImageData(imageFrame, 0, 0);
+                    }
+                }
+            }
+
+            function grabLoop(){
+                try {
+                    senderContext.drawImage(videoEl, 0, 0, settings.canvasWidth, settings.canvasHeight);
+                } catch (e) {}
+                var imageData = senderContext.getImageData(0, 0, settings.canvasWidth, settings.canvasHeight);
+                if(stream) stream.write(imageData.data);
+                setTimeout(grabLoop, settings.grabRate);
+            }
+
+            /**
+             * Called when camera is available
+             * @param stream
+             */
+            function succesCam(stream){
+                videoEl.src = window.URL.createObjectURL(stream);
+                videoEl.play();
+                grabLoop();
+            }
+            /**
+             *
+             * Called if the user don't accept cam
+             */
+            function failCam() {
+                console.log('Error no webcam access');
+            }
+
+            userMedia({video: true}, succesCam, failCam);
+        })
+    })(document)
+</script>
+</body>
+</html>
