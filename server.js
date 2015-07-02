@@ -24,7 +24,7 @@ bs.on('connection', function(client){
 
         console.log('clients :', clients);
         console.log('otherClients :', otherClients);
-        
+
 
         _.each(otherClients, function(other){
             var responseStream = other.createStream(meta);

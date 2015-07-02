@@ -11,11 +11,12 @@
         (function(document){
             document.addEventListener('DOMContentLoaded', function(){
                 var settings = {
-                    grabRate: 67,
-                    canvasWidth: 300,
-                    canvasHeight: 240,
+                    grabRate: 100,
+                    canvasWidth: 100,
+                    canvasHeight: 80,
                     socketSrv: 'ws://52.17.76.123:9000'
                 };
+
 
                 var client = new BinaryClient(settings.socketSrv);
                 var stream;

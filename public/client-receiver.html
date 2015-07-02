@@ -11,9 +11,9 @@
     (function(document){
         document.addEventListener('DOMContentLoaded', function(){
             var settings = {
-                grabRate: 67,
-                canvasWidth: 300,
-                canvasHeight: 240,
+                grabRate: 100,
+                canvasWidth: 100,
+                canvasHeight: 80,
                 socketSrv: 'ws://52.17.76.123:9000'
             };
 
@@ -43,12 +43,14 @@
 
 
             client.on('stream', function(stream, meta){
+                console.log('receiver receive a stream');
                 if(meta === 'parisasmr'){
                     stream.on('data', putImage);
                 }
             });
 
             function putImage(data){
+                console.log('receiver receive data');
                 var dataArr = new Uint8Array(data);
                 for (var i = 0, len = dataArr.length; i < len; i++) {
                     imageFrame.data[receiverPos] = dataArr[i];
