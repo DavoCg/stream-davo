@@ -6,6 +6,10 @@ var _ = require('lodash');
 var app = express();
 app.use(express.static(__dirname + '/public'));
 
+app.get('/test', function(res, res){
+    return res.json({test: 'OK'})
+});
+
 var server = http.createServer(app);
 
 var bs = BinaryServer({server: server});
